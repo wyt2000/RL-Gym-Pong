@@ -6,7 +6,7 @@ import sys
 sys.path.insert(0, os.getcwd())
 
 from src.utils.misc_utils import get_params_from_file
-from src.utils.pipeline import evaluate
+from src.utils.pipeline import evaluate, train
 from src.alg.RL_alg import RL_alg
 from src.alg.PB18111684.PB18111684 import PB18111684
 
@@ -25,7 +25,7 @@ if __name__ == '__main__':
         os.remove('./score.csv')
     for alg in RL_alg.__subclasses__():
         env, policy = init_env_policy(alg, main_params['env_name'])
-        evaluate(env,policy,**main_params['evaluate'])
+        train(env,policy,**main_params['train'])
         del env, policy
 
 
