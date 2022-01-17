@@ -6,11 +6,14 @@ from src.utils.misc_utils import get_params_from_file
 import numpy as np
 import cv2
 import collections
+import torch
+
+from src.alg.PB18111684.DQN import DQN
 
 Experience = collections.namedtuple(
-        'Experience', 
-        field_names=['state', 'action', 'reward', 'new_state']
-    )
+    'Experience', 
+    field_names=['state', 'action', 'reward', 'new_state']
+)
 
 class PB18111684(RL_alg):
     def __init__(self,ob_space,ac_space):
@@ -18,6 +21,8 @@ class PB18111684(RL_alg):
         assert isinstance(ac_space, Discrete)
         self.config = get_params_from_file('src.alg.PB18111684.rl_configs',params_name='params') # 传入参数
         
+        self.device = 'cpu'
+
         self.ac_space = ac_space
         self.state_dim = ob_space.shape[0]
         self.action_dim = ac_space.n
@@ -26,13 +31,21 @@ class PB18111684(RL_alg):
         self.frame_buffer = []
         self.old_action = 0
  
-        self.old_state = np.zeros((self.frame_buffer_size, 84, 84))
+        self.state_shape = (self.frame_buffer_size, 84, 84)
+        self.old_state = np.zeros(self.state_shape)
         self.reward = 0
 
         self.replay_buffer_size = self.config['replay_buffer_size']
         self.replay_buffer = collections.deque(
             maxlen = self.replay_buffer_size
         )
+
+        self.epsilon = self.config['eps_init']
+        self.eps_decay = self.config['eps_decay']
+        self.eps_min = self.config['eps_min']
+    
+        self.Q = DQN(self.state_shape, self.action_dim)
+        self.Q_target = DQN(self.state_shape, self.action_dim)
 
     def transform_image(self, image):
         '''
@@ -70,8 +83,15 @@ class PB18111684(RL_alg):
         
         return action
 
-    def explore(self, obs):
-        action = self.ac_space.sample()
+    def explore(self, state):
+        self.epsilon = max(self.epsilon * self.eps_decay, self.eps_min)
+        if np.random.random() < self.epsilon:
+            action = self.ac_space.sample()
+        else:
+            state = np.array([state], copy=False)
+            state = torch.tensor(state).to(self.device)
+            _, action = torch.max(self.Q(state), dim=1)
+            action = action.item()
         return action
 
     def get_reward(self, reward):

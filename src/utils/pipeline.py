@@ -15,6 +15,7 @@ def train(env, policy, num_train_episodes, is_render):
             policy.get_reward(reward)
             ep_ret += reward
             ep_len += 1
+        print(ep_ret)
 
 def evaluate(env,policy,num_evaluate_episodes,is_render):
     for j in range(num_evaluate_episodes):
