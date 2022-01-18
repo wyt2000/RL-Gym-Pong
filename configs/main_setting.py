@@ -5,8 +5,8 @@ params = {
             'num_evaluate_episodes':100,
         },
         'train':{
-            'is_render': True,
-            'num_train_episodes': 100,
+            'is_render': False,
+            'num_train_episodes': 1000,
         },
         'alg': 'PB18111684',
 
