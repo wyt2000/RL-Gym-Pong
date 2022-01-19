@@ -145,7 +145,7 @@ class PB18111684():
             action = self.ac_space.sample()
         else:
             state = state.unsqueeze(0).to(self.device)
-            _, action = torch.max(self.Q(state), dim=1)
+            action = self.Q(state).max(dim=1)[1]
             action = action.item()
         return action
 
