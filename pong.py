@@ -8,6 +8,7 @@ import collections
 import torch
 import torch.nn as nn
 import tqdm
+import json
 
 Experience = collections.namedtuple(
     'Experience', 
@@ -191,8 +192,11 @@ class PB18111684():
         
 def train(env, policy, num_train_episodes, is_render):
     try:
+        #policy.load()
+        log = []
         with tqdm.tqdm(total=num_train_episodes, ncols=100) as pbar:
             avg_reward = 0
+            i = 0
             for j in range(num_train_episodes):
                 obs = env.reset()
                 done = False
@@ -206,11 +210,24 @@ def train(env, policy, num_train_episodes, is_render):
                     policy.get_reward(reward)
                     ep_ret += reward
                     ep_len += 1
-                avg_reward = (avg_reward * j + ep_ret) / (j + 1)
+                avg_reward = (avg_reward * i + ep_ret) / (i + 1)
+                i += 1
+                if i == 100:
+                    log.append({'Episode':i,'reward':avg_reward})
+                    avg_reward = 0
+                    i = 0
                 pbar.set_description(f"Epoch: {j}, avg_reward: {avg_reward:.2f}")
                 pbar.update(1)
     finally:
         policy.save()
+        with open('reward.log', 'w') as f:
+            dump = json.dumps(
+                log,
+                indent=4,
+                separators=(',', ': ')
+            )
+            f.write(dump)
+
             
 env = gym.make('Pong-v0')
 policy = PB18111684(env.observation_space, env.action_space)
