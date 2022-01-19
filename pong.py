@@ -116,7 +116,7 @@ class PB18111684():
         obs = self.transform_image(obs)
 
         if len(self.frame_buffer) == self.frame_buffer_size:
-            state = torch.tensor(self.frame_buffer).to(torch.float32) / 255.0
+            state = torch.from_numpy(np.stack(self.frame_buffer)).to(torch.float32) / 255.0
             self.replay_buffer.append(
                 Experience(
                     self.old_state,
@@ -192,8 +192,8 @@ def train(env, policy, num_train_episodes, is_render):
             ep_ret = 0
             ep_len = 0
             while not(done):
-                if is_render:
-                    env.render()
+                # if is_render:
+                #     env.render()
                 ac = policy.step(obs)
                 obs, reward, done, _ = env.step(ac)
                 policy.get_reward(reward)
