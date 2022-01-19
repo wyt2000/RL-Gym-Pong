@@ -185,7 +185,7 @@ class PB18111684():
         torch.save(self.Q.state_dict(), "model.dat")
 
     def load(self):
-        self.Q.load_state_dict(torch.load("model.dat"))
+        self.Q.load_state_dict(torch.load("model_in.dat", map_location=self.device))
 
     def test(self):
         raise NotImplementedError
@@ -195,6 +195,7 @@ def train(env, policy, num_train_episodes, is_render):
         #policy.load()
         log = []
         with tqdm.tqdm(total=num_train_episodes, ncols=100) as pbar:
+            max_avg_reward = -20
             avg_reward = 0
             i = 0
             for j in range(num_train_episodes):
@@ -214,12 +215,14 @@ def train(env, policy, num_train_episodes, is_render):
                 i += 1
                 if i == 100:
                     log.append({'Episode':i,'reward':avg_reward})
+                    if avg_reward > max_avg_reward:
+                        max_avg_reward = avg_reward
+                        policy.save()
                     avg_reward = 0
                     i = 0
                 pbar.set_description(f"Epoch: {j}, avg_reward: {avg_reward:.2f}")
                 pbar.update(1)
     finally:
-        policy.save()
         with open('reward.log', 'w') as f:
             dump = json.dumps(
                 log,
