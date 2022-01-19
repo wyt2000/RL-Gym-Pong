@@ -119,10 +119,10 @@ class PB18111684():
             state = torch.tensor(self.frame_buffer).to(torch.float32) / 255.0
             self.replay_buffer.append(
                 Experience(
-                    self.old_state.to(self.device),
-                    torch.tensor(self.old_action).to(self.device),
-                    torch.tensor(self.reward).to(self.device),
-                    state.to(self.device)
+                    self.old_state,
+                    torch.tensor(self.old_action),
+                    torch.tensor(self.reward),
+                    state
                 )
             )
             if len(self.replay_buffer) == self.replay_buffer_size:
@@ -155,10 +155,10 @@ class PB18111684():
             self.batch_size,
             replace = False
         )
-        states = torch.stack([self.replay_buffer[i].state for i in indices])
-        actions = torch.stack([self.replay_buffer[i].action for i in indices])
-        rewards = torch.stack([self.replay_buffer[i].reward for i in indices])
-        new_states = torch.stack([self.replay_buffer[i].new_state for i in indices])
+        states = torch.stack([self.replay_buffer[i].state for i in indices]).to(self.device)
+        actions = torch.stack([self.replay_buffer[i].action for i in indices]).to(self.device)
+        rewards = torch.stack([self.replay_buffer[i].reward for i in indices]).to(self.device)
+        new_states = torch.stack([self.replay_buffer[i].new_state for i in indices]).to(self.device)
         
         q_max = self.Q_target(new_states).max(dim=1)[0]
         q_max = q_max.detach()
