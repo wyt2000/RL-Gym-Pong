@@ -180,28 +180,37 @@ class PB18111684():
         cv2.imshow('show', image)
         cv2.waitKey(0)
 
+    def save(self):
+        torch.save(self.Q.state_dict(), "model.dat")
+
+    def load(self):
+        self.Q.load_state_dict(torch.load("model.dat"))
+
     def test(self):
         raise NotImplementedError
         
 def train(env, policy, num_train_episodes, is_render):
-    with tqdm.tqdm(total=num_train_episodes, ncols=100) as pbar:
-        avg_reward = 0
-        for j in range(num_train_episodes):
-            obs = env.reset()
-            done = False
-            ep_ret = 0
-            ep_len = 0
-            while not(done):
-                # if is_render:
-                #     env.render()
-                ac = policy.step(obs)
-                obs, reward, done, _ = env.step(ac)
-                policy.get_reward(reward)
-                ep_ret += reward
-                ep_len += 1
-            avg_reward = (avg_reward * j + ep_ret) / (j + 1)
-            pbar.set_description(f"Epoch: {j}, avg_reward: {avg_reward:.2f}")
-            pbar.update(1)
+    try:
+        with tqdm.tqdm(total=num_train_episodes, ncols=100) as pbar:
+            avg_reward = 0
+            for j in range(num_train_episodes):
+                obs = env.reset()
+                done = False
+                ep_ret = 0
+                ep_len = 0
+                while not(done):
+                    # if is_render:
+                    #     env.render()
+                    ac = policy.step(obs)
+                    obs, reward, done, _ = env.step(ac)
+                    policy.get_reward(reward)
+                    ep_ret += reward
+                    ep_len += 1
+                avg_reward = (avg_reward * j + ep_ret) / (j + 1)
+                pbar.set_description(f"Epoch: {j}, avg_reward: {avg_reward:.2f}")
+                pbar.update(1)
+    finally:
+        policy.save()
             
 env = gym.make('Pong-v0')
 policy = PB18111684(env.observation_space, env.action_space)
