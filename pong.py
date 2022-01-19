@@ -1,34 +1,85 @@
 from gym.spaces import Discrete
-
-from src.alg.RL_alg import RL_alg
-from src.utils.misc_utils import get_params_from_file
+import gym
+import gym.envs
 
 import numpy as np
 import cv2
 import collections
 import torch
 import torch.nn as nn
-
-from src.alg.PB18111684.DQN import DQN
+import tqdm
 
 Experience = collections.namedtuple(
     'Experience', 
     field_names=['state', 'action', 'reward', 'new_state']
 )
 
-class PB18111684(RL_alg):
-    def __init__(self,ob_space,ac_space):
+class DQN(nn.Module):
+    def __init__(self, in_shape, n_actions):
         super().__init__()
-        assert isinstance(ac_space, Discrete)
-        self.config = get_params_from_file('src.alg.PB18111684.rl_configs',params_name='params') # 传入参数
-        
-        self.device = 'cuda'
+        self.conv = nn.Sequential(
+            nn.Conv2d(
+                in_channels  = in_shape[0],
+                out_channels = 32,
+                kernel_size  = 8,
+                stride       = 4
+            ),
+            nn.ReLU(),
+            nn.Conv2d(
+                in_channels  = 32,
+                out_channels = 64,
+                kernel_size  = 4,
+                stride       = 2
+            ),
+            nn.ReLU(),
+            nn.Conv2d(
+                in_channels  = 64,
+                out_channels = 64,
+                kernel_size  = 3,
+                stride       = 1
+            ),
+            nn.ReLU(),
+            nn.Flatten()
+        )
+        conv_out_size = self.conv(
+                torch.zeros(1, *in_shape)
+        ).shape[1]
+        self.fc = nn.Sequential(
+            nn.Linear(
+                in_features  = conv_out_size,
+                out_features = 512
+            ),
+            nn.ReLU(),
+            nn.Linear(
+               in_features   = 512,
+               out_features  = n_actions 
+            )
+        )
 
+    def forward(self, x):
+        x = self.conv(x)
+        x = self.fc(x)
+        return x
+
+class PB18111684():
+    def __init__(self,ob_space,ac_space):
+        assert isinstance(ac_space, Discrete)
+
+        self.device = 'cpu'
+        self.frame_buffer_size = 4
+        self.replay_buffer_size = 10000
+        self.epsilon = 1.0
+        self.eps_decay = 0.999985
+        self.eps_min = 0.02
+        self.batch_size = 32
+        self.gamma = 0.99
+        self.sync_target_network = 1000
+        self.learning_rate = 1e-4
+        
         self.ac_space = ac_space
         self.state_dim = ob_space.shape[0]
         self.action_dim = ac_space.n
 
-        self.frame_buffer_size = self.config['frame_buffer_size']
         self.frame_buffer = []
         self.old_action = 0
  
@@ -36,26 +87,19 @@ class PB18111684(RL_alg):
         self.old_state = torch.zeros(self.state_shape)
         self.reward = 0
 
-        self.replay_buffer_size = self.config['replay_buffer_size']
         self.replay_buffer = collections.deque(
             maxlen = self.replay_buffer_size
         )
 
-        self.epsilon = self.config['eps_init']
-        self.eps_decay = self.config['eps_decay']
-        self.eps_min = self.config['eps_min']
     
-        self.Q = DQN(self.state_shape, self.action_dim)
-        self.Q_target = DQN(self.state_shape, self.action_dim)
+        self.Q = DQN(self.state_shape, self.action_dim).to(self.device)
+        self.Q_target = DQN(self.state_shape, self.action_dim).to(self.device)
 
-        self.batch_size = self.config['batch_size']
-        self.gamma = self.config['gamma']
         self.optimizer = torch.optim.Adam(
             self.Q.parameters(),
-            lr = self.config['learning_rate']
+            lr = self.learning_rate
         )
 
-        self.sync_target_network = self.config['sync_target_network']
         self.state_count = 0
 
     def transform_image(self, image):
@@ -138,3 +182,27 @@ class PB18111684(RL_alg):
 
     def test(self):
         raise NotImplementedError
+        
+def train(env, policy, num_train_episodes, is_render):
+    with tqdm.tqdm(total=num_train_episodes, ncols=100) as pbar:
+        avg_reward = 0
+        for j in range(num_train_episodes):
+            obs = env.reset()
+            done = False
+            ep_ret = 0
+            ep_len = 0
+            while not(done):
+                if is_render:
+                    env.render()
+                ac = policy.step(obs)
+                obs, reward, done, _ = env.step(ac)
+                policy.get_reward(reward)
+                ep_ret += reward
+                ep_len += 1
+            avg_reward = (avg_reward * j + ep_ret) / (j + 1)
+            pbar.set_description(f"Epoch: {j}, avg_reward: {avg_reward:.2f}")
+            pbar.update(1)
+            
+env = gym.make('Pong-v0')
+policy = PB18111684(env.observation_space, env.action_space)
+train(env, policy, 1000, False)
