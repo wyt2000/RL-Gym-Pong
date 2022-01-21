@@ -1,6 +1,6 @@
 params = {
-        'alg_name': 'random_policy',
-        'max_iteration': 100,
+        'alg_name': 'DQN',
+        'max_iteration': 1000,
         'frame_buffer_size': 4,
         'replay_buffer_size': 10000,
         'eps_init': 1.0,
