@@ -4,6 +4,7 @@
 
 - I choose RGB image input environment **Pong-v0** with autogard and optimization tool pytorch.
 - I use **Deep Q-network** referred to a [tutorial](https://towardsdatascience.com/deep-q-network-dqn-i-bce08bdf2af) to train the agent.
+- Use `train.py` to train the model.
 
 ### Technical Routes
 
