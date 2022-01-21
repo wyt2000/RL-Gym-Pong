@@ -100,4 +100,4 @@ The agent learn a must win strategy when it moves first, throwing the ball to th
 
 The ten times playing animation:
 
-![pong](E:\homework\USTC-2021-Fall-HW\机器学习\RL\RL-Gym-Pong\src\alg\PB18111684\asserts\pong.gif)
+![pong](./asserts/pong.gif)
