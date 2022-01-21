@@ -25,7 +25,7 @@ if __name__ == '__main__':
         os.remove('./score.csv')
     for alg in RL_alg.__subclasses__():
         env, policy = init_env_policy(alg, main_params['env_name'])
-        train(env,policy,**main_params['train'])
+        evaluate(env,policy,**main_params['evaluate'])
         del env, policy
 
 

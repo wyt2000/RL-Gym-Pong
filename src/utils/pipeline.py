@@ -1,4 +1,5 @@
 import os
+from time import sleep
 import gym
 import tqdm
 
@@ -31,6 +32,7 @@ def evaluate(env,policy,num_evaluate_episodes,is_render):
         while not(done):
             if is_render:
                 env.render()
+                sleep(0.025)
             # Take deterministic actions at test time 
             ac = policy.step(obs)
             obs, reward, done, _ = env.step(ac)

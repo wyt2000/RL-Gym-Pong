@@ -1,7 +1,7 @@
 params = {
         'env_name': 'Pong-v0',
         'evaluate':{
-            'is_render': False,
+            'is_render': True,
             'num_evaluate_episodes':100,
         },
         'train':{
