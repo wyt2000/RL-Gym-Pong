@@ -22,7 +22,7 @@ class PB18111684(RL_alg):
         assert isinstance(ac_space, Discrete)
         self.config = get_params_from_file('src.alg.PB18111684.rl_configs',params_name='params') # 传入参数
         
-        self.device = 'cpu'
+        self.device = 'cuda'
 
         self.ac_space = ac_space
         self.state_dim = ob_space.shape[0]
